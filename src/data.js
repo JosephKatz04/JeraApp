@@ -197,6 +197,53 @@ export const albumPhotos = [
   },
 ]
 
+export const memoryMapPins = [
+  {
+    id: 'pin-toronto-coffee',
+    placeName: 'Toronto coffee walk',
+    date: '2026-06-08',
+    locationQuery: 'Downtown Toronto, Ontario',
+    latitude: 43.6532,
+    longitude: -79.3832,
+    description: 'A city walk that felt calm, familiar, and very us.',
+    photo: '',
+    memoryType: 'dates',
+  },
+  {
+    id: 'pin-yyz',
+    placeName: 'Toronto airport goodbye',
+    date: '2026-05-19',
+    locationQuery: 'Toronto Pearson International Airport',
+    latitude: 43.6777,
+    longitude: -79.6248,
+    description: 'One of those hard airport moments made softer by the next plan.',
+    photo: '',
+    memoryType: 'trips',
+  },
+  {
+    id: 'pin-calgary',
+    placeName: 'Calgary visit',
+    date: '2026-05-20',
+    locationQuery: 'Calgary, Alberta',
+    latitude: 51.0447,
+    longitude: -114.0719,
+    description: 'A pinned reminder that the distance has real places on both ends.',
+    photo: '',
+    memoryType: 'milestones',
+  },
+  {
+    id: 'pin-banff-dream',
+    placeName: 'Banff someday marker',
+    date: '2026-04-02',
+    locationQuery: 'Banff, Alberta',
+    latitude: 51.1784,
+    longitude: -115.5708,
+    description: 'A future trip idea worth keeping visible on the map.',
+    photo: '',
+    memoryType: 'future planning',
+  },
+]
+
 export const dateNightIdeas = [
   {
     id: 'cozy-1',

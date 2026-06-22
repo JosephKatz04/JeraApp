@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import L from 'leaflet'
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import {
   CalendarHeart,
   Camera,
@@ -20,13 +23,21 @@ import {
   X,
 } from 'lucide-react'
 import { NavLink, Route, Routes } from 'react-router-dom'
-import { albumPhotos, bucketList, countdownEvents, couple, dateNightIdeas, importantDates, memories, notes } from './data'
+import { albumPhotos, bucketList, countdownEvents, couple, dateNightIdeas, importantDates, memories, memoryMapPins, notes } from './data'
 
 const MEMORY_STORAGE_KEY = 'our-little-map.memories'
 const NOTE_STORAGE_KEY = 'our-little-map.notes'
 const TRIP_STORAGE_KEY = 'our-little-map.trips'
 const ALBUM_STORAGE_KEY = 'our-little-map.album'
 const DATE_NIGHT_STORAGE_KEY = 'our-little-map.dateNight'
+const MAP_STORAGE_KEY = 'our-little-map.mapPins'
+
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
 
 const memoryCategories = ['firsts', 'trips', 'calls', 'gifts', 'funny moments', 'milestones']
 
@@ -58,6 +69,16 @@ const dateNightCategories = [
   'silly/fun',
   'future planning',
 ]
+const mapMemoryTypes = ['dates', 'trips', 'calls', 'gifts', 'milestones', 'future planning', 'little moments']
+
+const emptyMapPinForm = {
+  placeName: '',
+  locationQuery: '',
+  date: '',
+  description: '',
+  photo: '',
+  memoryType: 'dates',
+}
 
 const emptyPhotoForm = {
   caption: '',
@@ -1289,15 +1310,215 @@ function DateNightPage() {
 }
 
 function MapPage() {
+  const [pins, setPins] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(MAP_STORAGE_KEY)
+      return saved ? JSON.parse(saved) : memoryMapPins
+    } catch {
+      return memoryMapPins
+    }
+  })
+  const [pinForm, setPinForm] = useState(emptyMapPinForm)
+  const [activeType, setActiveType] = useState('all')
+  const [mapFormError, setMapFormError] = useState('')
+  const [isGeocoding, setIsGeocoding] = useState(false)
+  const [isMapFormOpen, setIsMapFormOpen] = useState(false)
+
+  useEffect(() => {
+    window.localStorage.setItem(MAP_STORAGE_KEY, JSON.stringify(pins))
+  }, [pins])
+
+  const filteredPins = useMemo(
+    () =>
+      [...pins]
+        .filter((pin) => activeType === 'all' || pin.memoryType === activeType)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [activeType, pins],
+  )
+
+  const mapCenter = filteredPins.length
+    ? [filteredPins[0].latitude, filteredPins[0].longitude]
+    : [47.5, -97.5]
+
+  function handlePinFieldChange(event) {
+    const { name, value } = event.target
+    setPinForm((current) => ({ ...current, [name]: value }))
+  }
+
+  async function handlePinSubmit(event) {
+    event.preventDefault()
+
+    if (
+      !pinForm.placeName.trim() ||
+      !pinForm.locationQuery.trim() ||
+      !pinForm.date ||
+      !pinForm.description.trim()
+    ) {
+      return
+    }
+
+    setMapFormError('')
+    setIsGeocoding(true)
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(pinForm.locationQuery.trim())}`,
+      )
+      const results = await response.json()
+      const match = results[0]
+
+      if (!match) {
+        setMapFormError('No location found. Try adding the city, province, or country.')
+        return
+      }
+
+      setPins((current) => [
+        {
+          id: crypto.randomUUID(),
+          placeName: pinForm.placeName.trim(),
+          locationQuery: pinForm.locationQuery.trim(),
+          date: pinForm.date,
+          latitude: Number(match.lat),
+          longitude: Number(match.lon),
+          description: pinForm.description.trim(),
+          photo: pinForm.photo.trim(),
+          memoryType: pinForm.memoryType,
+        },
+        ...current,
+      ])
+      setPinForm(emptyMapPinForm)
+      setIsMapFormOpen(false)
+    } catch {
+      setMapFormError('Could not look up that location right now. Check the address and try again.')
+    } finally {
+      setIsGeocoding(false)
+    }
+  }
+
   return (
-    <PageScaffold title="Map of Memories" subtitle="A simple Toronto-Calgary connection view for now, ready for pinned memories later.">
-      <div className="map-card">
-        <div className="city-pin toronto"><MapPinned size={20} />Toronto</div>
-        <svg viewBox="0 0 680 260" aria-hidden="true">
-          <path d="M90 170C210 55 348 221 462 104C516 49 582 58 620 34" />
-          <Plane className="plane-on-map" size={26} />
-        </svg>
-        <div className="city-pin calgary"><MapPinned size={20} />Calgary</div>
+    <PageScaffold title="Map of Memories" subtitle="A private map of places that matter, searchable by address or location name.">
+      <div className="memory-map-layout">
+        <section className="memory-map-panel">
+          <div className="map-filter-bar">
+            <div>
+              <p className="eyebrow">OpenStreetMap</p>
+              <h2>{filteredPins.length} pinned places</h2>
+            </div>
+            <button className="add-memory-button" type="button" onClick={() => setIsMapFormOpen(true)}>
+              <MapPinned size={18} />
+              <span>Add Pin</span>
+            </button>
+            <div className="category-filters" aria-label="Filter map pins by memory type">
+              {['all', ...mapMemoryTypes].map((type) => (
+                <button
+                  className={activeType === type ? 'filter-chip active' : 'filter-chip'}
+                  key={type}
+                  type="button"
+                  onClick={() => setActiveType(type)}
+                >
+                  {toTitleCase(type)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="leaflet-map-shell">
+            <MapContainer center={mapCenter} zoom={5} scrollWheelZoom className="leaflet-map" key={`${mapCenter[0]}-${mapCenter[1]}-${activeType}`}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {filteredPins.map((pin) => (
+                <Marker key={pin.id} position={[pin.latitude, pin.longitude]}>
+                  <Popup>
+                    <div className="map-popup">
+                      {pin.photo && <img src={pin.photo} alt="" />}
+                      <strong>{pin.placeName}</strong>
+                      <span>{formatDate(pin.date)} / {toTitleCase(pin.memoryType)}</span>
+                      <p>{pin.description}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+        </section>
+
+        {isMapFormOpen && (
+          <section className="map-form-panel" aria-labelledby="map-form-title">
+            <div className="section-heading">
+              <span className="icon-pill"><MapPinned size={18} /></span>
+              <div>
+                <p className="eyebrow">Add location</p>
+                <h2 id="map-form-title">Pin a memory</h2>
+              </div>
+            </div>
+
+            <form className="memory-form map-pin-form" onSubmit={handlePinSubmit}>
+              <label>
+                <span>Place name</span>
+                <input name="placeName" value={pinForm.placeName} onChange={handlePinFieldChange} placeholder="Coffee shop, airport, park..." required />
+              </label>
+
+              <label>
+                <span>Address or location</span>
+                <input name="locationQuery" value={pinForm.locationQuery} onChange={handlePinFieldChange} placeholder="CN Tower, Toronto or Calgary airport" required />
+              </label>
+
+              <div className="form-row">
+                <label>
+                  <span>Date</span>
+                  <input name="date" type="date" value={pinForm.date} onChange={handlePinFieldChange} required />
+                </label>
+                <label>
+                  <span>Memory type</span>
+                  <select name="memoryType" value={pinForm.memoryType} onChange={handlePinFieldChange}>
+                    {mapMemoryTypes.map((type) => (
+                      <option key={type} value={type}>{toTitleCase(type)}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                <span>Description</span>
+                <textarea name="description" value={pinForm.description} onChange={handlePinFieldChange} rows="4" placeholder="What happened here?" required />
+              </label>
+
+              <label>
+                <span>Optional photo URL</span>
+                <input name="photo" value={pinForm.photo} onChange={handlePinFieldChange} placeholder="https://..." />
+              </label>
+
+              {mapFormError && <p className="form-error">{mapFormError}</p>}
+
+              <div className="form-actions">
+                <button className="primary-action" type="submit" disabled={isGeocoding}>
+                  <Save size={18} />
+                  <span>{isGeocoding ? 'Finding location...' : 'Add pin'}</span>
+                </button>
+                <button className="secondary-action" type="button" onClick={() => setIsMapFormOpen(false)}>
+                  <X size={18} />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        <section className="map-list-panel" aria-label="Pinned memory locations">
+          {filteredPins.map((pin) => (
+            <article className="map-list-item" key={pin.id}>
+              {pin.photo ? <img src={pin.photo} alt="" /> : <span className="map-list-icon"><MapPinned size={20} /></span>}
+              <div>
+                <span>{toTitleCase(pin.memoryType)} / {formatDate(pin.date)}</span>
+                <h2>{pin.placeName}</h2>
+                <p>{pin.description}</p>
+                <small>{pin.locationQuery || `${pin.latitude.toFixed(4)}, ${pin.longitude.toFixed(4)}`}</small>
+              </div>
+            </article>
+          ))}
+        </section>
       </div>
     </PageScaffold>
   )
