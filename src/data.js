@@ -145,11 +145,56 @@ export const notes = [
 ]
 
 export const bucketList = [
-  { id: 1, label: 'Weekend in Banff', complete: false },
-  { id: 2, label: 'Toronto island picnic', complete: true },
-  { id: 3, label: 'Cook the same dinner on FaceTime', complete: true },
-  { id: 4, label: 'Make a photo book', complete: false },
-  { id: 5, label: 'Find our favourite airport snack', complete: false },
+  {
+    id: 'bucket-banff',
+    title: 'Weekend in Banff',
+    category: 'travel',
+    status: 'want to do',
+    notes: 'A mountain weekend when the timing and budget line up.',
+    targetDate: '',
+    memoryPhoto: '',
+    memoryCaption: '',
+  },
+  {
+    id: 'bucket-island',
+    title: 'Toronto island picnic',
+    category: 'cozy',
+    status: 'completed',
+    notes: 'Simple food, water nearby, and no rushing.',
+    targetDate: '2026-07-12',
+    memoryPhoto: '',
+    memoryCaption: 'A quiet little day that felt like a tradition starting.',
+  },
+  {
+    id: 'bucket-facetime-dinner',
+    title: 'Cook the same dinner on FaceTime',
+    category: 'food',
+    status: 'completed',
+    notes: 'Same recipe, different kitchens.',
+    targetDate: '2026-04-21',
+    memoryPhoto: '',
+    memoryCaption: 'Two plates, one call, and very different chopping speeds.',
+  },
+  {
+    id: 'bucket-photo-book',
+    title: 'Make a photo book',
+    category: 'future',
+    status: 'planned',
+    notes: 'Collect screenshots, airport photos, and the ordinary ones too.',
+    targetDate: '2026-12-01',
+    memoryPhoto: '',
+    memoryCaption: '',
+  },
+  {
+    id: 'bucket-airport-snack',
+    title: 'Find our favourite airport snack',
+    category: 'random',
+    status: 'want to do',
+    notes: 'A very serious shared ranking system.',
+    targetDate: '',
+    memoryPhoto: '',
+    memoryCaption: '',
+  },
 ]
 
 export const albumPhotos = [

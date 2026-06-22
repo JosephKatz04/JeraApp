@@ -305,8 +305,7 @@ h2 {
 
 .anniversary-card,
 .feature-card,
-.countdown-tile,
-.bucket-item {
+.countdown-tile {
   border: 1px solid var(--border);
   background: rgba(255, 253, 248, 0.78);
   box-shadow: 0 16px 48px rgba(15, 63, 73, 0.09);
@@ -391,7 +390,6 @@ h2 {
 .feature-card > p,
 .timeline-item p,
 .page-heading > p,
-.bucket-item,
 .feature-card small {
   color: var(--muted);
   line-height: 1.55;
@@ -1841,32 +1839,198 @@ h2 {
   font-weight: 800;
 }
 
-.bucket-list {
+.bucket-layout {
   display: grid;
-  gap: 10px;
+  gap: 18px;
 }
 
-.bucket-item {
-  display: flex;
-  align-items: center;
+.bucket-progress-panel,
+.bucket-form-panel,
+.bucket-list-panel,
+.completed-memories-panel {
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  background: rgba(255, 253, 248, 0.78);
+  box-shadow: 0 16px 48px rgba(15, 63, 73, 0.09);
+  backdrop-filter: blur(16px);
+}
+
+.bucket-progress-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.86), rgba(217, 238, 230, 0.72)),
+    radial-gradient(circle at 90% 14%, rgba(242, 201, 130, 0.25), transparent 14rem);
+}
+
+.bucket-progress-panel h2 {
+  margin-bottom: 8px;
+  font-size: clamp(2rem, 10vw, 4rem);
+}
+
+.bucket-progress-panel p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.bucket-progress-track {
+  height: 14px;
+}
+
+.bucket-form-panel,
+.bucket-list-panel,
+.completed-memories-panel {
+  padding: 18px;
+}
+
+.bucket-form-panel {
+  animation: formReveal 280ms ease both;
+}
+
+.bucket-list {
+  display: grid;
   gap: 12px;
-  min-height: 64px;
+}
+
+.bucket-card {
+  display: grid;
+  gap: 14px;
   padding: 16px;
-  border-radius: 18px;
+  border: 1px solid rgba(23, 54, 58, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 253, 248, 0.78);
+  box-shadow: 0 14px 34px rgba(15, 63, 73, 0.08);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.bucket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 54px rgba(15, 63, 73, 0.12);
+}
+
+.bucket-card.status-completed {
+  background:
+    linear-gradient(135deg, rgba(217, 238, 230, 0.84), rgba(255, 253, 248, 0.86)),
+    radial-gradient(circle at 92% 16%, rgba(242, 201, 130, 0.2), transparent 12rem);
+}
+
+.bucket-card-main {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+}
+
+.bucket-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(217, 238, 230, 0.76);
+  color: var(--green);
+  cursor: pointer;
+}
+
+.bucket-check.complete {
+  background: linear-gradient(135deg, var(--blue), var(--green));
+  color: var(--white);
+}
+
+.bucket-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bucket-card h2 {
+  margin-bottom: 7px;
+  font-size: 1.14rem;
+}
+
+.bucket-card p {
+  margin-bottom: 8px;
+  color: var(--muted);
+  line-height: 1.48;
+}
+
+.bucket-card small {
+  color: var(--muted);
   font-weight: 800;
 }
 
-.bucket-item svg {
-  color: #9cafaa;
+.bucket-actions {
+  margin-top: 0;
 }
 
-.bucket-item.complete {
+.completed-memory-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.completed-memory-card {
+  overflow: hidden;
+  border: 1px solid rgba(23, 54, 58, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 253, 248, 0.78);
+  box-shadow: 0 14px 34px rgba(15, 63, 73, 0.08);
+}
+
+.completed-memory-card img,
+.completed-memory-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+
+.completed-memory-card img {
+  display: block;
+  object-fit: cover;
+}
+
+.completed-memory-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(135deg, var(--blue-soft), var(--seafoam)),
+    radial-gradient(circle at 30% 20%, rgba(255, 253, 248, 0.4), transparent 10rem);
+  color: var(--white);
+}
+
+.completed-memory-card div:last-child {
+  padding: 15px;
+}
+
+.completed-memory-card span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(217, 238, 230, 0.78);
   color: var(--blue);
-  background: rgba(217, 238, 230, 0.86);
+  font-size: 0.72rem;
+  font-weight: 900;
 }
 
-.bucket-item.complete svg {
-  color: var(--green);
+.completed-memory-card h2 {
+  margin-bottom: 8px;
+  font-size: 1.12rem;
+}
+
+.completed-memory-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.48;
 }
 
 @keyframes pageIn {
@@ -2078,6 +2242,15 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .bucket-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .completed-memory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .countdown-clock {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -2202,6 +2375,29 @@ h2 {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .bucket-layout {
+    grid-template-columns: minmax(300px, 0.62fr) minmax(0, 1.38fr);
+    align-items: start;
+  }
+
+  .bucket-progress-panel,
+  .bucket-form-panel {
+    position: sticky;
+    top: 28px;
+  }
+
+  .bucket-list-panel {
+    grid-row: span 2;
+  }
+
+  .completed-memories-panel {
+    grid-column: 1 / -1;
+  }
+
+  .completed-memory-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

@@ -31,6 +31,7 @@ const TRIP_STORAGE_KEY = 'our-little-map.trips'
 const ALBUM_STORAGE_KEY = 'our-little-map.album'
 const DATE_NIGHT_STORAGE_KEY = 'our-little-map.dateNight'
 const MAP_STORAGE_KEY = 'our-little-map.mapPins'
+const BUCKET_STORAGE_KEY = 'our-little-map.bucketList'
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -70,6 +71,8 @@ const dateNightCategories = [
   'future planning',
 ]
 const mapMemoryTypes = ['dates', 'trips', 'calls', 'gifts', 'milestones', 'future planning', 'little moments']
+const bucketCategories = ['travel', 'food', 'experiences', 'cozy', 'future', 'random', 'gifts', 'traditions']
+const bucketStatuses = ['want to do', 'planned', 'completed']
 
 const emptyMapPinForm = {
   placeName: '',
@@ -78,6 +81,16 @@ const emptyMapPinForm = {
   description: '',
   photo: '',
   memoryType: 'dates',
+}
+
+const emptyBucketForm = {
+  title: '',
+  status: 'want to do',
+  notes: '',
+  targetDate: '',
+  category: 'experiences',
+  memoryPhoto: '',
+  memoryCaption: '',
 }
 
 const emptyPhotoForm = {
@@ -265,7 +278,7 @@ function HomeDashboard() {
   const latestNote = notes[0]
   const nextAnniversaryDate = getNextEventDate({ date: importantDates.anniversary, repeats: 'yearly' })
   const anniversaryDays = getTimeRemaining(nextAnniversaryDate).days
-  const completeCount = bucketList.filter((item) => item.complete).length
+  const completeCount = bucketList.filter((item) => item.status === 'completed').length
   const progress = Math.round((completeCount / bucketList.length) * 100)
 
   return (
@@ -1525,15 +1538,277 @@ function MapPage() {
 }
 
 function BucketListPage() {
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(BUCKET_STORAGE_KEY)
+      return saved ? JSON.parse(saved) : bucketList
+    } catch {
+      return bucketList
+    }
+  })
+  const [form, setForm] = useState(emptyBucketForm)
+  const [editingId, setEditingId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState('all')
+
+  useEffect(() => {
+    window.localStorage.setItem(BUCKET_STORAGE_KEY, JSON.stringify(items))
+  }, [items])
+
+  const completedItems = items.filter((item) => item.status === 'completed')
+  const progress = items.length ? Math.round((completedItems.length / items.length) * 100) : 0
+  const visibleItems = useMemo(
+    () =>
+      [...items]
+        .filter((item) => activeCategory === 'all' || item.category === activeCategory)
+        .sort((a, b) => bucketStatuses.indexOf(a.status) - bucketStatuses.indexOf(b.status)),
+    [activeCategory, items],
+  )
+
+  function handleBucketFieldChange(event) {
+    const { name, value } = event.target
+    setForm((current) => ({ ...current, [name]: value }))
+  }
+
+  function openBucketForm() {
+    setForm(emptyBucketForm)
+    setEditingId(null)
+    setIsFormOpen(true)
+  }
+
+  function resetBucketForm() {
+    setForm(emptyBucketForm)
+    setEditingId(null)
+    setIsFormOpen(false)
+  }
+
+  function handleBucketSubmit(event) {
+    event.preventDefault()
+
+    const cleanedItem = {
+      ...form,
+      title: form.title.trim(),
+      notes: form.notes.trim(),
+      memoryPhoto: form.memoryPhoto.trim(),
+      memoryCaption: form.memoryCaption.trim(),
+    }
+
+    if (!cleanedItem.title) {
+      return
+    }
+
+    if (editingId) {
+      setItems((current) => current.map((item) => (item.id === editingId ? { ...cleanedItem, id: editingId } : item)))
+    } else {
+      setItems((current) => [{ ...cleanedItem, id: crypto.randomUUID() }, ...current])
+    }
+
+    resetBucketForm()
+  }
+
+  function startBucketEdit(item) {
+    setEditingId(item.id)
+    setForm({
+      title: item.title,
+      status: item.status,
+      notes: item.notes || '',
+      targetDate: item.targetDate || '',
+      category: item.category,
+      memoryPhoto: item.memoryPhoto || '',
+      memoryCaption: item.memoryCaption || '',
+    })
+    setIsFormOpen(true)
+  }
+
+  function deleteBucketItem(itemId) {
+    setItems((current) => current.filter((item) => item.id !== itemId))
+    if (editingId === itemId) {
+      resetBucketForm()
+    }
+  }
+
+  function toggleCompleted(itemId) {
+    setItems((current) =>
+      current.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              status: item.status === 'completed' ? 'want to do' : 'completed',
+            }
+          : item,
+      ),
+    )
+  }
+
   return (
     <PageScaffold title="Shared Bucket List" subtitle="The big plans, tiny traditions, and trips worth keeping in view.">
-      <div className="bucket-list">
-        {bucketList.map((item) => (
-          <article className={item.complete ? 'bucket-item complete' : 'bucket-item'} key={item.id}>
-            <CheckCircle2 size={20} />
-            <span>{item.label}</span>
-          </article>
-        ))}
+      <div className="bucket-layout">
+        <section className="bucket-progress-panel">
+          <div>
+            <p className="eyebrow">Shared progress</p>
+            <h2>{progress}% complete</h2>
+            <p>{completedItems.length} of {items.length} plans have become memories.</p>
+          </div>
+          <div className="progress-track bucket-progress-track">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+          <button className="add-memory-button" type="button" onClick={openBucketForm}>
+            <Plus size={18} />
+            <span>Add item</span>
+          </button>
+        </section>
+
+        {isFormOpen && (
+          <section className="bucket-form-panel" aria-labelledby="bucket-form-title">
+            <div className="section-heading">
+              <span className="icon-pill"><CheckCircle2 size={18} /></span>
+              <div>
+                <p className="eyebrow">{editingId ? 'Editing plan' : 'New plan'}</p>
+                <h2 id="bucket-form-title">{editingId ? 'Update bucket item' : 'Add bucket item'}</h2>
+              </div>
+            </div>
+
+            <form className="memory-form bucket-form" onSubmit={handleBucketSubmit}>
+              <label>
+                <span>Title</span>
+                <input name="title" value={form.title} onChange={handleBucketFieldChange} placeholder="What should we do?" required />
+              </label>
+
+              <div className="form-row">
+                <label>
+                  <span>Category</span>
+                  <select name="category" value={form.category} onChange={handleBucketFieldChange}>
+                    {bucketCategories.map((category) => (
+                      <option key={category} value={category}>{toTitleCase(category)}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Status</span>
+                  <select name="status" value={form.status} onChange={handleBucketFieldChange}>
+                    {bucketStatuses.map((status) => (
+                      <option key={status} value={status}>{toTitleCase(status)}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                <span>Optional target date</span>
+                <input name="targetDate" type="date" value={form.targetDate} onChange={handleBucketFieldChange} />
+              </label>
+
+              <label>
+                <span>Notes</span>
+                <textarea name="notes" value={form.notes} onChange={handleBucketFieldChange} rows="3" placeholder="Why this matters, what to remember, or how to plan it." />
+              </label>
+
+              {form.status === 'completed' && (
+                <>
+                  <label>
+                    <span>Completed memory photo URL</span>
+                    <input name="memoryPhoto" value={form.memoryPhoto} onChange={handleBucketFieldChange} placeholder="https://..." />
+                  </label>
+                  <label>
+                    <span>Completed memory caption</span>
+                    <input name="memoryCaption" value={form.memoryCaption} onChange={handleBucketFieldChange} placeholder="What made it worth saving?" />
+                  </label>
+                </>
+              )}
+
+              <div className="form-actions">
+                <button className="primary-action" type="submit">
+                  <Save size={18} />
+                  <span>{editingId ? 'Save item' : 'Add item'}</span>
+                </button>
+                <button className="secondary-action" type="button" onClick={resetBucketForm}>
+                  <X size={18} />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        <section className="bucket-list-panel">
+          <div className="album-toolbar">
+            <div>
+              <p className="eyebrow">Plans</p>
+              <h2>{visibleItems.length} bucket items</h2>
+            </div>
+            <div className="category-filters" aria-label="Filter bucket list by category">
+              {['all', ...bucketCategories].map((category) => (
+                <button
+                  className={activeCategory === category ? 'filter-chip active' : 'filter-chip'}
+                  key={category}
+                  type="button"
+                  onClick={() => setActiveCategory(category)}
+                >
+                  {toTitleCase(category)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bucket-list">
+            {visibleItems.map((item) => (
+              <article className={`bucket-card status-${item.status.replaceAll(' ', '-')}`} key={item.id}>
+                <div className="bucket-card-main">
+                  <button
+                    className={item.status === 'completed' ? 'bucket-check complete' : 'bucket-check'}
+                    type="button"
+                    onClick={() => toggleCompleted(item.id)}
+                    aria-label={item.status === 'completed' ? `Mark ${item.title} not completed` : `Mark ${item.title} completed`}
+                  >
+                    <CheckCircle2 size={20} />
+                  </button>
+                  <div>
+                    <span>{toTitleCase(item.category)} / {toTitleCase(item.status)}</span>
+                    <h2>{item.title}</h2>
+                    {item.notes && <p>{item.notes}</p>}
+                    {item.targetDate && <small>Target: {formatDate(item.targetDate)}</small>}
+                  </div>
+                </div>
+                <div className="memory-actions bucket-actions">
+                  <button type="button" onClick={() => startBucketEdit(item)} aria-label={`Edit ${item.title}`}>
+                    <Edit3 size={16} />
+                    <span>Edit</span>
+                  </button>
+                  <button type="button" onClick={() => deleteBucketItem(item.id)} aria-label={`Delete ${item.title}`}>
+                    <Trash2 size={16} />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="completed-memories-panel">
+          <div className="section-heading">
+            <span className="icon-pill"><Sparkles size={18} /></span>
+            <div>
+              <p className="eyebrow">Completed memories</p>
+              <h2>{completedItems.length} saved wins</h2>
+            </div>
+          </div>
+          <div className="completed-memory-grid">
+            {completedItems.map((item) => (
+              <article className="completed-memory-card" key={item.id}>
+                {item.memoryPhoto ? (
+                  <img src={item.memoryPhoto} alt="" />
+                ) : (
+                  <div className="completed-memory-placeholder"><CheckCircle2 size={26} /></div>
+                )}
+                <div>
+                  <span>{toTitleCase(item.category)}</span>
+                  <h2>{item.title}</h2>
+                  <p>{item.memoryCaption || item.notes || 'Completed together and worth remembering.'}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
     </PageScaffold>
   )
