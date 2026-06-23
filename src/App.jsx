@@ -727,7 +727,7 @@ function HomeDashboard() {
           <p className="eyebrow">{couple.homeBaseOne} / {couple.homeBaseTwo}</p>
           <h1>{couple.personOne} & {couple.personTwo}</h1>
           <p className="hero-copy">
-            A quiet place for the memories, plans, and small signals that keep us close between flights.
+            The hub of Joey and Lera's Relationship
           </p>
         </div>
         <div className="anniversary-card">
