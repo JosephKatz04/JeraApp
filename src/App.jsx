@@ -671,7 +671,7 @@ function Brand({ compact = false }) {
         <Plane size={18} />
       </span>
       <div>
-        <strong>Our Little Map</strong>
+        <strong>Jera App</strong>
         {!compact && <span>{couple.homeBaseOne} to {couple.homeBaseTwo}</span>}
       </div>
     </div>
