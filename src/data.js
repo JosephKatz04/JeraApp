@@ -144,6 +144,42 @@ export const notes = [
   },
 ]
 
+export const dailyThreeEntries = [
+  {
+    id: 'daily-2026-06-23-joey',
+    date: '2026-06-23',
+    author: 'Joey',
+    items: [
+      'A calm call before the day got busy.',
+      'Having something real to look forward to.',
+      'The way Lera remembers small details.',
+    ],
+    note: 'A regular day, but still ours.',
+  },
+  {
+    id: 'daily-2026-06-23-lera',
+    date: '2026-06-23',
+    author: 'Lera',
+    items: [
+      'Feeling supported even from far away.',
+      'The next visit feeling a little closer.',
+      'Laughing about something tiny together.',
+    ],
+    note: 'Distance felt softer today.',
+  },
+  {
+    id: 'daily-2026-06-22-joey',
+    date: '2026-06-22',
+    author: 'Joey',
+    items: [
+      'A voice note at the right time.',
+      'Dinner plans that became a future idea.',
+      'The patience we keep choosing.',
+    ],
+    note: '',
+  },
+]
+
 export const bucketList = [
   {
     id: 'bucket-banff',
@@ -196,6 +232,57 @@ export const bucketList = [
     memoryCaption: '',
   },
 ]
+
+export const nextVisitPlan = {
+  id: 'next-visit-summer-2026',
+  title: 'Toronto to Calgary summer visit',
+  startDate: '2026-08-16',
+  endDate: '2026-08-22',
+  city: 'Calgary',
+  arrivalTime: '18:40',
+  departureTime: '11:15',
+  travelNotes: 'Joey flies YYZ to YYC. Keep the first night easy: airport pickup, food, and no over-planning.',
+  itinerary: [
+    {
+      id: 'visit-plan-1',
+      date: '2026-08-16',
+      time: '19:30',
+      title: 'Airport pickup and first dinner',
+      location: 'YYC / Calgary',
+      notes: 'Low-pressure dinner after the flight, then a quiet night together.',
+      category: 'travel',
+    },
+    {
+      id: 'visit-plan-2',
+      date: '2026-08-17',
+      time: '10:30',
+      title: 'Slow coffee and a walk',
+      location: 'Kensington',
+      notes: 'No rushing. Just a first full day that feels like us.',
+      category: 'cozy',
+    },
+    {
+      id: 'visit-plan-3',
+      date: '2026-08-19',
+      time: '13:00',
+      title: 'Mountain day if the weather is kind',
+      location: 'Canmore or Banff',
+      notes: 'Pack snacks, layers, and a backup plan in Calgary.',
+      category: 'activity',
+    },
+  ],
+  packing: [
+    { id: 'pack-1', label: 'Passport or ID', done: false },
+    { id: 'pack-2', label: 'Chargers and battery pack', done: true },
+    { id: 'pack-3', label: 'Comfy airport outfit', done: false },
+    { id: 'pack-4', label: 'Small surprise for Lera', done: false },
+  ],
+  wishList: [
+    { id: 'visit-wish-1', text: 'Take one photo we both actually love', done: false },
+    { id: 'visit-wish-2', text: 'Cook breakfast together once', done: false },
+    { id: 'visit-wish-3', text: 'Have one completely unplanned evening', done: true },
+  ],
+}
 
 export const albumPhotos = [
   {

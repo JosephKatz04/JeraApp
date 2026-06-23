@@ -1,6 +1,6 @@
 {
-  "name": "Our Little Map",
-  "short_name": "Little Map",
+  "name": "Jera App",
+  "short_name": "Jera App",
   "description": "A private anniversary app for two people building a life across cities.",
   "start_url": "/",
   "scope": "/",
