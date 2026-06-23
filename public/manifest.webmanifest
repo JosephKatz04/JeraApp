@@ -2,12 +2,15 @@
   "name": "Jera App",
   "short_name": "Jera App",
   "description": "A private anniversary app for two people building a life across cities.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#fbf8ef",
   "theme_color": "#0f3f49",
   "orientation": "portrait-primary",
+  "categories": ["lifestyle", "social"],
   "icons": [
     {
       "src": "/icon-192.png",

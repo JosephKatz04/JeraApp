@@ -430,7 +430,7 @@ function normalizeWeather(city, payload) {
 
 function formatTemperature(value) {
   if (typeof value !== 'number') return '--'
-  return `${Math.round(value)}°`
+  return `${Math.round(value)}\u00b0`
 }
 
 function getWeatherComparison(weather) {
@@ -444,7 +444,7 @@ function getWeatherComparison(weather) {
 
   if (torontoInfo.type === 'rain' && calgaryInfo.type === 'clear') return 'Toronto is rainy, Calgary is clear.'
   if (calgaryInfo.type === 'rain' && torontoInfo.type === 'clear') return 'Calgary is rainy, Toronto is clear.'
-  if (tempDifference >= 3) return `Warmer in ${warmerCity} today by about ${tempDifference}°C.`
+  if (tempDifference >= 3) return `Warmer in ${warmerCity} today by about ${tempDifference}\u00b0C.`
   if (torontoInfo.type !== calgaryInfo.type) return `${toronto.city} is ${toronto.condition.toLowerCase()}, ${calgary.city} is ${calgary.condition.toLowerCase()}.`
   return 'Different weather, same us.'
 }
@@ -514,7 +514,7 @@ function App() {
         <header className="topbar">
           <Brand compact />
           <nav className="top-nav" aria-label="Primary navigation">
-            {navItems.slice(0, 4).map((item) => (
+            {navItems.map((item) => (
               <NavigationLink key={item.to} item={item} />
             ))}
           </nav>
@@ -695,12 +695,30 @@ function NavigationLink({ item, mobile = false, onNavigate }) {
 }
 
 function HomeDashboard() {
-  const latestMemory = memories[0]
-  const latestNote = notes[0]
+  const [dashboardMemories] = useSupabaseList('memories', memories, rowMappers.memory.from, rowMappers.memory.to, { orderBy: 'memory_date' })
+  const [dashboardNotes] = useSupabaseList('love_notes', notes, rowMappers.note.from, rowMappers.note.to, { orderBy: 'note_time' })
+  const [dashboardBucket] = useSupabaseList('bucket_list_items', bucketList, rowMappers.bucket.from, rowMappers.bucket.to, { orderBy: 'created_at' })
+  const [dashboardDaily] = useSupabaseList('daily_three_entries', dailyThreeEntries, rowMappers.dailyThree.from, rowMappers.dailyThree.to, { orderBy: 'entry_date' })
+  const [dashboardVisit] = useNextVisitState(nextVisitPlan)
+  const [dashboardTrips] = useSupabaseTrips(getConfiguredTrips(countdownEvents))
+  const latestMemory = dashboardMemories[0] || memories[0]
+  const latestNote = dashboardNotes[0] || notes[0]
   const nextAnniversaryDate = getNextEventDate({ date: importantDates.anniversary, repeats: 'yearly' })
   const anniversaryDays = getTimeRemaining(nextAnniversaryDate).days
-  const completeCount = bucketList.filter((item) => item.status === 'completed').length
-  const progress = Math.round((completeCount / bucketList.length) * 100)
+  const completeCount = dashboardBucket.filter((item) => item.status === 'completed').length
+  const progress = dashboardBucket.length ? Math.round((completeCount / dashboardBucket.length) * 100) : 0
+  const visitTargetDate = new Date(`${dashboardVisit.startDate || nextVisitPlan.startDate}T${dashboardVisit.arrivalTime || '00:00'}`)
+  const visitDays = getTimeRemaining(visitTargetDate).days
+  const today = new Date().toISOString().slice(0, 10)
+  const todaysDailyCount = [couple.personOne, couple.personTwo].filter((person) =>
+    dashboardDaily.some((entry) => entry.date === today && entry.author === person),
+  ).length
+  const upcomingEvents = getCountdownEventItems(
+    countdownEvents.map((event) => (event.category === 'next-trip' ? { ...event, trips: dashboardTrips } : event)),
+  )
+    .map((event) => ({ ...event, nextDate: getNextEventDate(event) }))
+    .sort((a, b) => a.nextDate.getTime() - b.nextDate.getTime())
+  const upcomingCountdown = upcomingEvents[0]
 
   return (
     <section className="page home-page">
@@ -713,13 +731,18 @@ function HomeDashboard() {
           </p>
         </div>
         <div className="anniversary-card">
-          <span>Anniversary</span>
-          <strong>{anniversaryDays}</strong>
-          <p>days until {formatCountdownDate(nextAnniversaryDate)}</p>
+          <span>Next visit</span>
+          <strong>{visitDays}</strong>
+          <p>days until {dashboardVisit.city || 'we are together again'}</p>
         </div>
       </div>
 
       <div className="dashboard-grid">
+        <FeatureCard eyebrow="Next visit" title={dashboardVisit.title || 'Next visit'} icon={Plane}>
+          <p>{dashboardVisit.city ? `${dashboardVisit.city} is on the calendar.` : 'The next hug can be planned here.'}</p>
+          <small><MapPinned size={14} /> {formatCountdownDate(visitTargetDate)}</small>
+        </FeatureCard>
+
         <FeatureCard eyebrow="Latest memory" title={latestMemory.title} icon={CalendarHeart}>
           <p>{latestMemory.description}</p>
           <small><MapPinned size={14} /> {latestMemory.location} / {formatDate(latestMemory.date)}</small>
@@ -730,11 +753,21 @@ function HomeDashboard() {
           <small>{formatDateTime(latestNote.dateTime)}</small>
         </FeatureCard>
 
+        <FeatureCard eyebrow="Daily 3" title={`${todaysDailyCount} of 2 today`} icon={Feather}>
+          <p>{todaysDailyCount === 2 ? 'Both of today’s little gratitude lists are saved.' : 'There is still space for today’s three small thank-yous.'}</p>
+          <small><Heart size={14} /> {formatDate(today)}</small>
+        </FeatureCard>
+
         <FeatureCard eyebrow="Shared bucket list" title={`${progress}% complete`} icon={CheckCircle2}>
           <div className="progress-track">
             <span style={{ width: `${progress}%` }} />
           </div>
-          <p>{completeCount} of {bucketList.length} little plans already done.</p>
+          <p>{completeCount} of {dashboardBucket.length} little plans already done.</p>
+        </FeatureCard>
+
+        <FeatureCard eyebrow="Upcoming countdown" title={upcomingCountdown?.name || 'Anniversary'} icon={Clock3}>
+          <p>{upcomingCountdown?.message || 'The next date worth keeping close.'}</p>
+          <small>{upcomingCountdown ? formatCountdownDate(upcomingCountdown.nextDate) : `${anniversaryDays} days`}</small>
         </FeatureCard>
       </div>
 
@@ -2613,7 +2646,7 @@ function WeatherCityCard({ weather, loading }) {
       </div>
 
       <div className={loading ? 'weather-temp loading' : 'weather-temp'}>
-        <strong>{loading ? '--°' : formatTemperature(weather.temperature)}</strong>
+        <strong>{loading ? '--\u00b0' : formatTemperature(weather.temperature)}</strong>
         <span>{loading ? 'Loading' : weather.condition}</span>
       </div>
 
